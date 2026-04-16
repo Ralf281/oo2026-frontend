@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import type { Product } from "../models/Product";
-import { Category } from "../models/Category";
+import type { Category } from "../models/Category";
 
 // renderdamine --> esmakordne componendi peale tulek
 // re-renderdamine --> componendi HTMLs muutujate olekute muutmine
@@ -90,7 +90,7 @@ function HomePage() {
         <div key={product.id}>
           {product.name} - {product.price}€
         </div>)}
-        
+
         <button disabled={page === 0} onClick={() => setPage(page - 1)}>Eelmine</button>
       <span>{page+1} / {totalPages}</span>
       <button disabled={page+1 === totalPages} onClick={() => setPage(page + 1)}>Järgmine</button>

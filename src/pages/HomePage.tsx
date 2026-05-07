@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import type { Product } from "../models/Product";
 import type { Category } from "../models/Category";
+import type { OrderRow } from "../models/OrderRow";
 
 // renderdamine --> esmakordne componendi peale tulek
 // re-renderdamine --> componendi HTMLs muutujate olekute muutmine
@@ -22,10 +23,12 @@ function HomePage() {
       .then(res => res.json())
       .then(json => setCategories(json)) 
   }, []);
+
   // uef --> enter
-  // onLoad funktsioon
+  // onLoad funktsioon + dependency array sees olevate muutujate muutmisel läheb käima
+  // http://localhost:8080/products?page=1&size=3&sort=id,desc&activeCategoryId=0
   useEffect(() => {
-    fetch(import.meta.env.VITE_BACK_URL + "/products") // URL kuhu läheb päring
+    fetch(import.meta.env.VITE_BACK_URL + `/products?page=${page}&size=${size}&sort=${sort}&activeCategoryId=${activeCategoryId}`) // URL kuhu läheb päring
       .then(res => res.json()) // kogu tagastus
       .then(json => {
         setProducts(json.content);
@@ -34,7 +37,8 @@ function HomePage() {
       }) // response-i body
   }, [page, size, sort, activeCategoryId]);
 
-   // function sizeHandler() {
+  // function sizeHandler() {
+
   // }
   const sizeHandler = (newSize: number) => {
     setSize(newSize);
@@ -51,24 +55,43 @@ function HomePage() {
     setPage(0);
   }
 
+  const addToCart = (clickedProduct: Product) => {
+    const cart: OrderRow[] = JSON.parse(localStorage.getItem("cart") || "[]");
+    const foundProduct = cart.find(orderRow => orderRow.product.id === clickedProduct.id);
+    if (foundProduct) {
+      foundProduct.quantity++;
+      // foundProduct.quantity += 1;
+      // foundProduct.quantity = foundProduct.quantity + 1;
+    } else {
+      cart.push({product: clickedProduct, quantity: 1});
+    }
+    // cart.push(); <--- maha
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }
+
+  // tõlge: https://react.i18next.com/guides/quick-start
   return (
     <div>
-       <div>
+      <div>
         {page*size+1}-{(page+1)*size > totalElements ? totalElements : (page+1)*size} 
         kuvatud {totalElements}-st
       </div>
+
       <select defaultValue={3} onChange={(e) => sizeHandler(Number(e.target.value))}>
         <option>2</option>
         <option>3</option>
         <option>4</option>
       </select>
+
       <br /><br />
+
       <button onClick={() => sortHandler("id,asc")}>Sorteeri vanemad enne</button>
       <button onClick={() => sortHandler("id,desc")}>Sorteeri uuemad enne</button>
       <button onClick={() => sortHandler("name,asc")}>Sorteeri A-Z</button>
       <button onClick={() => sortHandler("name,desc")}>Sorteeri Z-A</button>
       <button onClick={() => sortHandler("price,asc")}>Sorteeri hind kasvavalt</button>
       <button onClick={() => sortHandler("price,desc")}>Sorteeri hind kahanevalt</button>
+
       <br /><br />
 
       <button
@@ -84,14 +107,16 @@ function HomePage() {
           {category.name}
         </button>
       )}
+
       <br /><br />
 
       {products.map(product => 
         <div key={product.id}>
           {product.name} - {product.price}€
+          <button onClick={() => addToCart(product)}>Lisa ostukorvi</button>
         </div>)}
 
-        <button disabled={page === 0} onClick={() => setPage(page - 1)}>Eelmine</button>
+      <button disabled={page === 0} onClick={() => setPage(page - 1)}>Eelmine</button>
       <span>{page+1} / {totalPages}</span>
       <button disabled={page+1 === totalPages} onClick={() => setPage(page + 1)}>Järgmine</button>
     </div>
@@ -99,4 +124,3 @@ function HomePage() {
 }
 
 export default HomePage
-
